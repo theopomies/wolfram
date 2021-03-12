@@ -1,0 +1,65 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 340d82e9b9f4a50213a0b81793857a79121ce9a19700aea884487c6a24b63ec2
+
+name:           wolfram
+version:        0.1.0.0
+description:    Nothing important
+homepage:       https://github.com/githubuser/wolfram#readme
+bug-reports:    https://github.com/githubuser/wolfram/issues
+author:         Théo Pomies
+maintainer:     theo.pomies@epitech.eu
+copyright:      2021 Théo Pomies
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/wolfram
+
+library
+  exposed-modules:
+      Error
+      Generation
+      Libs
+      Parser
+  other-modules:
+      Paths_wolfram
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+  default-language: Haskell2010
+
+executable wolfram-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_wolfram
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , wolfram
+  default-language: Haskell2010
+
+test-suite wolfram-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_wolfram
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , wolfram
+  default-language: Haskell2010
