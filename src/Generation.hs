@@ -39,7 +39,7 @@ rule110 _   _   _   = throw ExhaustiveException
 
 genList :: Int -> Int -> Char
 genList a b
-    | a == b = '*'
+    | a == b    = '*'
     | otherwise = ' '
 
 firstLine :: EndConf -> (EndConf, Line)

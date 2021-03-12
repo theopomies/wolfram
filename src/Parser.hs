@@ -10,14 +10,14 @@ defaultConf :: Conf
 defaultConf = Conf (RuleNumber Nothing) (Start 0) (Lines Nothing) (WindowNumber 80) (Move 0)
 
 tokenize :: [String] -> [TOKEN]
-tokenize []               = []
+tokenize []                = []
 tokenize ("--rule" : xs)   = RULE : tokenize xs
 tokenize ("--start" : xs)  = START : tokenize xs
 tokenize ("--lines" : xs)  = LINES : tokenize xs
 tokenize ("--window" : xs) = WINDOW : tokenize xs
 tokenize ("--move" : xs)   = MOVE : tokenize xs
-tokenize ("-h" : xs)      = throw UsageException
-tokenize (x : xs)         = Value x : tokenize xs
+tokenize ("-h" : xs)       = throw UsageException
+tokenize (x : xs)          = Value x : tokenize xs
 
 parse :: [TOKEN] -> Conf -> Conf
 parse []                      c = c
