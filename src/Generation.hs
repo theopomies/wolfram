@@ -43,6 +43,11 @@ genList a b
     | otherwise = 'a'
 
 firstLine :: EndConf -> Line
+{--
 firstLine (EndConf _ _ _ (WindowNumber window) (Move move)) = ([genList i (move - div window 2 - 1) | i <- [0..]],
                                                                [genList i ((-1) * move + div window 2) | i <- [0..(window - 1)]],
                                                                [genList i ((-1) * move - div window 2 - mod window 2) | i <- [0..]])
+                                                               --}
+firstLine (EndConf _ _ _ (WindowNumber window) (Move move)) = ([genList i ((-1) * move - div window 2 - 1) | i <- [0..]],
+                                                               [genList i (move + div window 2) | i <- [0..(window - 1)]],
+                                                               [genList i (move - div window 2 - mod window 2) | i <- [0..]])
