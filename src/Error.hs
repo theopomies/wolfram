@@ -33,5 +33,5 @@ printHelp = mapM_  putStrLn ["Usage:",
                              "\t       If positive, it’s translated to the right."]
 
 exceptionHandler :: MyException -> IO ()
-exceptionHandler ArgException   = printHelp >> (exitWith $ ExitFailure 84)
 exceptionHandler UsageException = printHelp >> exitSuccess
+exceptionHandler _              = printHelp >> (exitWith $ ExitFailure 84)

@@ -11,11 +11,11 @@ defaultConf = Conf (RuleNumber Nothing) (Start 0) (Lines Nothing) (WindowNumber 
 
 tokenize :: [String] -> [TOKEN]
 tokenize []               = []
-tokenize ("-rule" : xs)   = RULE : tokenize xs
-tokenize ("-start" : xs)  = START : tokenize xs
-tokenize ("-lines" : xs)  = LINES : tokenize xs
-tokenize ("-window" : xs) = WINDOW : tokenize xs
-tokenize ("-move" : xs)   = MOVE : tokenize xs
+tokenize ("--rule" : xs)   = RULE : tokenize xs
+tokenize ("--start" : xs)  = START : tokenize xs
+tokenize ("--lines" : xs)  = LINES : tokenize xs
+tokenize ("--window" : xs) = WINDOW : tokenize xs
+tokenize ("--move" : xs)   = MOVE : tokenize xs
 tokenize ("-h" : xs)      = throw UsageException
 tokenize (x : xs)         = Value x : tokenize xs
 
@@ -47,8 +47,10 @@ setLines (Conf rule start _ window move) lines@(Just lineNo)
 setLines _                               Nothing      = throw ArgException
 
 setWindow :: Conf -> Maybe Int -> Conf
-setWindow (Conf rule start lines _ move) (Just window) = Conf rule start lines (WindowNumber window) move
-setWindow _                               Nothing      = throw ArgException
+setWindow (Conf rule start lines _ move) (Just window)
+    | window < 0                                      = throw ArgException
+    | otherwise                                       = Conf rule start lines (WindowNumber window) move
+setWindow _                              Nothing      = throw ArgException
 
 setMove :: Conf -> Maybe Int -> Conf
 setMove (Conf rule start lines window _) (Just move) = Conf rule start lines window (Move move)
