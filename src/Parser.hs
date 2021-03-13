@@ -3,7 +3,7 @@ module Parser (parse, Conf (..), WindowStart (..), WindowLength (..), WindowWidt
 import Text.Read (readMaybe)
 import Error
 import Control.Exception
-import Rules (Rule, rule30, rule90, rule110)
+import Rules (Rule, RuleNumber (..), getRule)
 import Lexer (TOKEN (..))
 
 data Conf = Conf Rule WindowStart WindowLength WindowWidth WindowMove
@@ -13,19 +13,12 @@ newtype WindowWidth  = WindowWidth Int
 newtype WindowMove   = WindowMove Int
 
 data WorkingConf = WorkingConf (Maybe RuleNumber) WindowStart WindowLength WindowWidth WindowMove
-newtype RuleNumber = RuleNumber Int
 
 parse :: [TOKEN] -> Conf
 parse = flip parse' defaultConf
 
 toConf :: WorkingConf -> Conf
 toConf (WorkingConf rule start ls window move) = Conf (getRule $ validateMaybe rule) start ls window move
-
-getRule :: RuleNumber -> Rule
-getRule (RuleNumber 30)  = rule30
-getRule (RuleNumber 90)  = rule90
-getRule (RuleNumber 110) = rule110
-getRule _                = throw ArgException
 
 defaultConf :: WorkingConf
 defaultConf = WorkingConf Nothing (WindowStart 0) (WindowLength Nothing) (WindowWidth 80) (WindowMove 0)
@@ -46,7 +39,7 @@ readWindowStart :: String -> Int
 readWindowStart = isPositive . validateMaybe . readMaybe
 
 readRule :: String -> Int
-readRule = isPositive . validateMaybe . readMaybe
+readRule = isValidRule . validateMaybe . readMaybe
 
 readWindow :: String -> Int
 readWindow = isPositive . validateMaybe . readMaybe
@@ -57,6 +50,11 @@ readWindowMove = validateMaybe . readMaybe
 validateMaybe :: Maybe a -> a
 validateMaybe Nothing  = throw ArgException
 validateMaybe (Just e) = e
+
+isValidRule :: Int -> Int
+isValidRule n
+    | n < 0 || n > 255 = throw ArgException
+    | otherwise        = n
 
 isPositive :: (Ord a, Num a) => a -> a
 isPositive n
