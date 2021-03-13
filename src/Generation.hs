@@ -1,87 +1,81 @@
-module Generation where
+module Generation (getLines, Window, Lines) where
 
 import Error
 import Control.Exception
-import Libs
+import Parser (Conf (..), WindowWidth (..), WindowMove (..))
+import Rules (Cell (..), Rule)
 
-rule30 :: Rule
-rule30 (Cell '*') (Cell '*') (Cell '*') = Cell ' '
-rule30 (Cell '*') (Cell '*') (Cell ' ') = Cell ' '
-rule30 (Cell '*') (Cell ' ') (Cell '*') = Cell ' '
-rule30 (Cell '*') (Cell ' ') (Cell ' ') = Cell '*'
-rule30 (Cell ' ') (Cell '*') (Cell '*') = Cell '*'
-rule30 (Cell ' ') (Cell '*') (Cell ' ') = Cell '*'
-rule30 (Cell ' ') (Cell ' ') (Cell '*') = Cell '*'
-rule30 (Cell ' ') (Cell ' ') (Cell ' ') = Cell ' '
-rule30 _          _          _          = throw ExhaustiveException
+type Lines = [Window]
+newtype Line = Window [Cell]
+instance Show Line where
+  show (Window cells) = map cellToChar cells
 
-rule90 :: Rule
-rule90 (Cell '*') (Cell '*') (Cell '*') = Cell ' '
-rule90 (Cell '*') (Cell '*') (Cell ' ') = Cell '*'
-rule90 (Cell '*') (Cell ' ') (Cell '*') = Cell ' '
-rule90 (Cell '*') (Cell ' ') (Cell ' ') = Cell '*'
-rule90 (Cell ' ') (Cell '*') (Cell '*') = Cell '*'
-rule90 (Cell ' ') (Cell '*') (Cell ' ') = Cell ' '
-rule90 (Cell ' ') (Cell ' ') (Cell '*') = Cell '*'
-rule90 (Cell ' ') (Cell ' ') (Cell ' ') = Cell ' '
-rule90 _          _          _          = throw ExhaustiveException
+newtype BeforeWindow = BeforeWindow [Cell]
+type Window = Line
+newtype AfterWindow = AfterWindow [Cell]
+newtype WorkingLine = WorkingLine (BeforeWindow, Window, AfterWindow)
 
-rule110 :: Rule
-rule110 (Cell '*') (Cell '*') (Cell '*') = Cell ' '
-rule110 (Cell '*') (Cell '*') (Cell ' ') = Cell '*'
-rule110 (Cell '*') (Cell ' ') (Cell '*') = Cell '*'
-rule110 (Cell '*') (Cell ' ') (Cell ' ') = Cell ' '
-rule110 (Cell ' ') (Cell '*') (Cell '*') = Cell '*'
-rule110 (Cell ' ') (Cell '*') (Cell ' ') = Cell '*'
-rule110 (Cell ' ') (Cell ' ') (Cell '*') = Cell '*'
-rule110 (Cell ' ') (Cell ' ') (Cell ' ') = Cell ' '
-rule110 _          _          _          = throw ExhaustiveException
+cellToChar :: Cell -> Char
+cellToChar (Cell char) = char
 
-genList :: Int -> Int -> Cell
-genList a b
-    | a == b    = Cell '*'
-    | otherwise = Cell ' '
+getWindow :: WorkingLine -> Window
+getWindow (WorkingLine (_, w, _)) = w
 
-firstLine :: EndConf -> (EndConf, Line)
-firstLine conf@(EndConf _ _ _ (WindowNumber window) (Move move)) = (conf, Line (BeforeWindow [genList i ((-1) * move - div window 2 - 1) | i <- [0..]],
-                                                                           Window [genList i (move + div window 2) | i <- [0..(window - 1)]],
-                                                                           AfterWindow [genList i (move - div window 2 - mod window 2) | i <- [0..]]))
+getLines :: Conf -> Lines
+getLines (Conf rule _ _ windowWidth windowMove) = map getWindow $ getAllLines rule $ firstLine windowWidth windowMove
 
-genWindow :: Line -> Rule -> Window
-genWindow (Line (BeforeWindow (x:xs), Window (a:b:c:as), AfterWindow (y:ys))) rule = Window $ rule x a b : rule a b c : genWindow' (Window (b:c:as)) y rule
-genWindow (Line (BeforeWindow (x:xs), Window (a:b:as),   AfterWindow (y:ys))) rule = Window $ rule x a b : [rule a b y]
-genWindow (Line (BeforeWindow (x:xs), Window (a:as),     AfterWindow (y:ys))) rule = Window [rule x a y]
-genWindow (Line (_,                   Window [],         _))                  _    = Window []
-genWindow _                                                                   _    = throw ExhaustiveException
+getAllLines :: Rule -> WorkingLine -> [WorkingLine]
+getAllLines rule line = line : getAllLines rule (getNextLine line rule)
+
+beforeWindowIndexes :: [Int]
+beforeWindowIndexes = [(-1), (-2)..]
+
+windowIndexes :: WindowWidth -> [Int]
+windowIndexes (WindowWidth window) = [0..(window - 1)]
+
+afterWindowIndexes :: WindowWidth -> [Int]
+afterWindowIndexes (WindowWidth window) = [window..]
+
+firstLine :: WindowWidth -> WindowMove -> WorkingLine
+firstLine window@(WindowWidth windowWidth) (WindowMove move) = let firstNonEmptyCellIndex = move + div windowWidth 2 in
+                                                WorkingLine (BeforeWindow [genCell i firstNonEmptyCellIndex | i <- beforeWindowIndexes],
+                                                             Window       [genCell i firstNonEmptyCellIndex | i <- windowIndexes window],
+                                                             AfterWindow  [genCell i firstNonEmptyCellIndex | i <- afterWindowIndexes window])
+
+genCell :: Int -> Int -> Cell
+genCell targetIndex currentIndex
+    | targetIndex == currentIndex = Cell '*'
+    | otherwise                   = Cell ' '
+
+genWindow :: WorkingLine -> Rule -> Window
+genWindow (WorkingLine (BeforeWindow (x:_), Window (a:b:c:as), AfterWindow (y:_))) rule = Window $ rule x a b : rule a b c : genWindow' (Window (b:c:as)) y rule
+genWindow (WorkingLine (BeforeWindow (x:_), Window (a:b:_),   AfterWindow (y:_))) rule  = Window $ rule x a b : [rule a b y]
+genWindow (WorkingLine (BeforeWindow (x:_), Window (a:_),     AfterWindow (y:_))) rule  = Window [rule x a y]
+genWindow (WorkingLine (_,                   Window [],         _))               _     = Window []
+genWindow _                                                                       _     = throw ExhaustiveException
 
 genWindow' :: Window -> Cell -> Rule -> [Cell]
 genWindow' (Window (x:y:z:xs)) cell rule = rule x y z : genWindow' (Window (y:z:xs)) cell rule
-genWindow' (Window (x:y:xs))   cell rule = [rule x y cell]
+genWindow' (Window (x:y:_))    cell rule = [rule x y cell]
 genWindow' _                   _    _    = throw ExhaustiveException
 
-genBefore :: Line -> Rule -> BeforeWindow
+genBefore :: WorkingLine -> Rule -> BeforeWindow
 genBefore line rule = BeforeWindow $ genBefore' line rule
 
-genBefore' :: Line -> Rule -> [Cell]
-genBefore' (Line (BeforeWindow (x:y:z:xs), Window [],     AfterWindow []))     rule = rule z y x : genBefore' (Line (BeforeWindow (y:z:xs), Window [], AfterWindow [])) rule
-genBefore' (Line (BeforeWindow (x:y:xs),   Window [],     AfterWindow (z:zs))) rule = rule y x z : genBefore' (Line (BeforeWindow (x:y:xs), Window [], AfterWindow [])) rule
-genBefore' (Line (BeforeWindow (x:y:xs),   Window (z:zs), _))                  rule = rule y x z : genBefore' (Line (BeforeWindow (x:y:xs), Window [], AfterWindow [])) rule
-genBefore' _                                                                   _    = throw ExhaustiveException
+genBefore' :: WorkingLine -> Rule -> [Cell]
+genBefore' (WorkingLine (BeforeWindow (x:y:z:xs), Window [],     AfterWindow []))     rule = rule z y x : genBefore' (WorkingLine (BeforeWindow (y:z:xs), Window [], AfterWindow [])) rule
+genBefore' (WorkingLine (BeforeWindow (x:y:xs),   Window [],     AfterWindow (z:_)))  rule = rule y x z : genBefore' (WorkingLine (BeforeWindow (x:y:xs), Window [], AfterWindow [])) rule
+genBefore' (WorkingLine (BeforeWindow (x:y:xs),   Window (z:_), _))                   rule = rule y x z : genBefore' (WorkingLine (BeforeWindow (x:y:xs), Window [], AfterWindow [])) rule
+genBefore' _                                                                          _    = throw ExhaustiveException
 
-genAfter :: Line -> Rule -> AfterWindow
+genAfter :: WorkingLine -> Rule -> AfterWindow
 genAfter line rule = AfterWindow $ genAfter' line rule
 
-genAfter' :: Line -> Rule -> [Cell]
-genAfter' (Line (BeforeWindow [],     Window [],          AfterWindow (x:y:z:xs))) rule = rule x y z : genAfter' (Line (BeforeWindow [], Window [], AfterWindow (y:z:xs))) rule
-genAfter' (Line (BeforeWindow (x:xs), Window [],          AfterWindow (y:z:ys)))   rule = rule x y z : genAfter' (Line (BeforeWindow [], Window [], AfterWindow (y:z:ys))) rule
-genAfter' (Line (_,                   Window list@(x:xs), AfterWindow (y:z:ys)))   rule = rule (last list) y z : genAfter' (Line (BeforeWindow [], Window [], AfterWindow (y:z:ys))) rule
-genAfter' _                                                                        _    = throw ExhaustiveException
+genAfter' :: WorkingLine -> Rule -> [Cell]
+genAfter' (WorkingLine (BeforeWindow [],    Window [],          AfterWindow (x:y:z:xs))) rule = rule x y z : genAfter' (WorkingLine (BeforeWindow [], Window [], AfterWindow (y:z:xs))) rule
+genAfter' (WorkingLine (BeforeWindow (x:_), Window [],          AfterWindow (y:z:ys)))   rule = rule x y z : genAfter' (WorkingLine (BeforeWindow [], Window [], AfterWindow (y:z:ys))) rule
+genAfter' (WorkingLine (_,                  Window list@(_:_),  AfterWindow (y:z:ys)))   rule = rule (last list) y z : genAfter' (WorkingLine (BeforeWindow [], Window [], AfterWindow (y:z:ys))) rule
+genAfter' _                                                                               _    = throw ExhaustiveException
 
-getNextLine :: Line -> Rule -> Line
-getNextLine line rule = Line (genBefore line rule, genWindow line rule, genAfter line rule)
-
-getAllLines :: (EndConf, Line) -> [Line]
-getAllLines (conf@(EndConf rule _ _ _ _), line) = line : getAllLines (conf, getNextLine line rule)
-
-getLines :: (EndConf, Line) -> (EndConf, [Line])
-getLines tuple@(conf, _) = (conf, getAllLines tuple)
+getNextLine :: WorkingLine -> Rule -> WorkingLine
+getNextLine line rule = WorkingLine (genBefore line rule, genWindow line rule, genAfter line rule)

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8fd7db3a545e0141d6115bce4182cee4b4c82d573610cb72b9840e272a8451d0
+-- hash: a88c6f21a3ca420aabd00a97fa43be7b64ef55c35365a2b89e799d97a9a5a04c
 
 name:           wolfram
 version:        0.1.0.0
@@ -27,11 +27,12 @@ source-repository head
 
 library
   exposed-modules:
+      Display
       Error
       Generation
-      Libs
+      Lexer
       Parser
-      Wolfram
+      Rules
   other-modules:
       Paths_wolfram
   hs-source-dirs:

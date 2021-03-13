@@ -2,7 +2,7 @@ module Error where
 
 import System.Exit
 import Control.Exception
-import System.Environment
+import System.Environment()
 
 data MyException = ArgException
                  | UsageException
@@ -34,4 +34,4 @@ printHelp = mapM_  putStrLn ["Usage:",
 
 exceptionHandler :: MyException -> IO ()
 exceptionHandler UsageException = printHelp >> exitSuccess
-exceptionHandler _              = printHelp >> (exitWith $ ExitFailure 84)
+exceptionHandler _              = printHelp >> exitWith (ExitFailure 84)

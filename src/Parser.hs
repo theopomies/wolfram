@@ -1,66 +1,79 @@
-module Parser where
+module Parser (parse, Conf (..), WindowStart (..), WindowLength (..), WindowWidth (..), WindowMove (..)) where
 
 import Text.Read (readMaybe)
 import Error
 import Control.Exception
-import Libs
-import Generation
+import Rules (Rule, rule30, rule90, rule110)
+import Lexer (TOKEN (..))
 
-defaultConf :: Conf
-defaultConf = Conf (RuleNumber Nothing) (Start 0) (Lines Nothing) (WindowNumber 80) (Move 0)
+data Conf = Conf Rule WindowStart WindowLength WindowWidth WindowMove
+newtype WindowStart  = WindowStart Int
+newtype WindowLength = WindowLength (Maybe Int)
+newtype WindowWidth  = WindowWidth Int
+newtype WindowMove   = WindowMove Int
 
-tokenize :: [String] -> [TOKEN]
-tokenize []                = []
-tokenize ("--rule" : xs)   = RULE : tokenize xs
-tokenize ("--start" : xs)  = START : tokenize xs
-tokenize ("--lines" : xs)  = LINES : tokenize xs
-tokenize ("--window" : xs) = WINDOW : tokenize xs
-tokenize ("--move" : xs)   = MOVE : tokenize xs
-tokenize ("-h" : xs)       = throw UsageException
-tokenize (x : xs)          = Value x : tokenize xs
+data WorkingConf = WorkingConf (Maybe RuleNumber) WindowStart WindowLength WindowWidth WindowMove
+newtype RuleNumber = RuleNumber Int
 
-parse :: [TOKEN] -> Conf -> Conf
-parse []                      c = c
-parse (RULE : Value v : xs)   c = parse xs $ setRule c $ readMaybe v
-parse (START : Value v : xs)  c = parse xs $ setStart c $ readMaybe v
-parse (LINES : Value v : xs)  c = parse xs $ setLines c $ readMaybe v
-parse (WINDOW : Value v : xs) c = parse xs $ setWindow c $ readMaybe v
-parse (MOVE : Value v : xs)   c = parse xs $ setMove c $ readMaybe v
-parse _                       _ = throw ArgException
+parse :: [TOKEN] -> Conf
+parse = flip parse' defaultConf
 
-setRule :: Conf -> Maybe Int -> Conf
-setRule (Conf _ start lines window move) (Just 30)  = Conf (RuleNumber (Just 30)) start lines window move
-setRule (Conf _ start lines window move) (Just 90)  = Conf (RuleNumber (Just 90)) start lines window move
-setRule (Conf _ start lines window move) (Just 110) = Conf (RuleNumber (Just 110)) start lines window move
-setRule _                                _          = throw ArgException
+toConf :: WorkingConf -> Conf
+toConf (WorkingConf rule start ls window move) = Conf (getRule $ validateMaybe rule) start ls window move
 
-setStart :: Conf -> Maybe Int -> Conf
-setStart (Conf rule _ lines window move) (Just start)
-    | start < 0 = throw ArgException
-    | otherwise = Conf rule (Start start) lines window move
-setStart _                               Nothing      = throw ArgException
+getRule :: RuleNumber -> Rule
+getRule (RuleNumber 30)  = rule30
+getRule (RuleNumber 90)  = rule90
+getRule (RuleNumber 110) = rule110
+getRule _                = throw ArgException
 
-setLines :: Conf -> Maybe Int -> Conf
-setLines (Conf rule start _ window move) lines@(Just lineNo)
-    | lineNo < 0 = throw ArgException
-    | otherwise = Conf rule start (Lines lines) window move
-setLines _                               Nothing      = throw ArgException
+defaultConf :: WorkingConf
+defaultConf = WorkingConf Nothing (WindowStart 0) (WindowLength Nothing) (WindowWidth 80) (WindowMove 0)
 
-setWindow :: Conf -> Maybe Int -> Conf
-setWindow (Conf rule start lines _ move) (Just window)
-    | window < 0                                      = throw ArgException
-    | otherwise                                       = Conf rule start lines (WindowNumber window) move
-setWindow _                              Nothing      = throw ArgException
+parse' :: [TOKEN] -> WorkingConf -> Conf
+parse' []                      c = toConf c
+parse' (RULE : Value v : xs)   c = parse' xs $ setRule c $ readRule v
+parse' (START : Value v : xs)  c = parse' xs $ setWindowStart c $ readWindowStart v
+parse' (LINES : Value v : xs)  c = parse' xs $ setWindowLength c $ readLine v
+parse' (WINDOW : Value v : xs) c = parse' xs $ setWindow c $ readWindow v
+parse' (MOVE : Value v : xs)   c = parse' xs $ setWindowMove c $ readWindowMove v
+parse' _                       _ = throw ArgException
 
-setMove :: Conf -> Maybe Int -> Conf
-setMove (Conf rule start lines window _) (Just move) = Conf rule start lines window (Move move)
-setMove _                                Nothing     = throw ArgException
+readLine :: String -> Int
+readLine = isPositive . validateMaybe . readMaybe
 
-getEndConf :: Conf -> EndConf
-getEndConf (Conf (RuleNumber (Just 30))  start lines window move) = EndConf rule30  start lines window move
-getEndConf (Conf (RuleNumber (Just 90))  start lines window move) = EndConf rule90  start lines window move
-getEndConf (Conf (RuleNumber (Just 110)) start lines window move) = EndConf rule110 start lines window move
-getEndConf _                                                      = throw ArgException
+readWindowStart :: String -> Int
+readWindowStart = isPositive . validateMaybe . readMaybe
 
-argsToEndConf :: [String] -> EndConf
-argsToEndConf args = getEndConf $ parse (tokenize args) defaultConf
+readRule :: String -> Int
+readRule = isPositive . validateMaybe . readMaybe
+
+readWindow :: String -> Int
+readWindow = isPositive . validateMaybe . readMaybe
+
+readWindowMove :: String -> Int
+readWindowMove = validateMaybe . readMaybe
+
+validateMaybe :: Maybe a -> a
+validateMaybe Nothing  = throw ArgException
+validateMaybe (Just e) = e
+
+isPositive :: (Ord a, Num a) => a -> a
+isPositive n
+    | n < 0     = throw ArgException
+    | otherwise = n
+
+setRule :: WorkingConf -> Int -> WorkingConf
+setRule (WorkingConf _ start ls window move) number = WorkingConf (Just (RuleNumber number)) start ls window move
+
+setWindowStart :: WorkingConf -> Int -> WorkingConf
+setWindowStart (WorkingConf rule _ ls window move) start = WorkingConf rule (WindowStart start) ls window move
+
+setWindowLength :: WorkingConf -> Int -> WorkingConf
+setWindowLength (WorkingConf rule start _ window move) ls = WorkingConf rule start (WindowLength $ Just ls) window move
+
+setWindow :: WorkingConf -> Int -> WorkingConf
+setWindow (WorkingConf rule start ls _ move) window = WorkingConf rule start ls (WindowWidth window) move
+
+setWindowMove :: WorkingConf -> Int -> WorkingConf
+setWindowMove (WorkingConf rule start ls window _) move = WorkingConf rule start ls window $ WindowMove move
