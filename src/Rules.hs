@@ -56,9 +56,9 @@ getTable :: RuleNumber -> [Cell]
 getTable (RuleNumber num) = [genCell num i | i <- [0..7]]
 
 genCell :: Int -> Int -> Cell
-genCell rule bit
-    | rule .&. (shift 1 bit) == 0 = Cell ' '
-    | otherwise                   = Cell '*'
+genCell rule bitNo
+    | testBit rule bitNo = Cell '*'
+    | otherwise          = Cell ' '
 
 cellsToIndex :: Cell -> Cell -> Cell -> Int
 cellsToIndex (Cell '*') (Cell '*') (Cell '*') = 7
