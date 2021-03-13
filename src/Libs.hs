@@ -1,11 +1,13 @@
 module Libs where
 
-type Cell = Char
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 type Rule = Cell -> Cell -> Cell -> Cell
-type BeforeWindow = [Cell]
-type Window = [Cell]
-type AfterWindow = [Cell]
-type Line = (BeforeWindow, Window, AfterWindow)
+newtype Cell = Cell Char deriving Show
+newtype BeforeWindow = BeforeWindow [Cell]
+newtype Window = Window [Cell]
+newtype AfterWindow = AfterWindow [Cell]
+newtype Line = Line (BeforeWindow, Window, AfterWindow)
 data TOKEN = RULE | LINES | START | WINDOW | MOVE | Value String
 data Conf = Conf RuleNumber Start Lines WindowNumber Move
 data EndConf = EndConf Rule Start Lines WindowNumber Move

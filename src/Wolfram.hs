@@ -6,8 +6,12 @@ import Libs
 import Error
 import Control.Exception
 
+displayWindow :: Window -> IO ()
+displayWindow (Window [])            = putChar '\n'
+displayWindow (Window ((Cell x):xs)) = putChar x >> displayWindow (Window xs)
+
 displayLine :: Line -> IO ()
-displayLine (_, window, _) = putStrLn window
+displayLine (Line (_, window, _)) = displayWindow window
 
 display :: (EndConf, [Line]) -> IO ()
 display ((EndConf _ (Start start) (Lines Nothing)       _ _), lines) = mapM_ displayLine $ drop start lines
