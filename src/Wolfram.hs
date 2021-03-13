@@ -6,12 +6,19 @@ import Libs
 import Error
 import Control.Exception
 
+{--
 displayWindow :: Window -> IO ()
 displayWindow (Window [])            = putChar '\n'
 displayWindow (Window ((Cell x):xs)) = putChar x >> displayWindow (Window xs)
+--}
+
+cellsToString :: [Cell] -> [Char]
+cellsToString []            = []
+cellsToString ((Cell c):cs) = c : cellsToString cs
 
 displayLine :: Line -> IO ()
-displayLine (Line (_, window, _)) = displayWindow window
+--displayLine (Line (_, window, _)) = displayWindow window
+displayLine (Line (_, Window cells, _)) = putStrLn $ cellsToString cells
 
 display :: (EndConf, [Line]) -> IO ()
 display ((EndConf _ (Start start) (Lines Nothing)       _ _), lines) = mapM_ displayLine $ drop start lines

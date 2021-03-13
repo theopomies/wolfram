@@ -72,10 +72,10 @@ genAfter :: Line -> Rule -> AfterWindow
 genAfter line rule = AfterWindow $ genAfter' line rule
 
 genAfter' :: Line -> Rule -> [Cell]
-genAfter' (Line (BeforeWindow [],     Window [],          AfterWindow (x:y:z:xs)))          rule = rule x y z : genAfter' (Line (BeforeWindow [], Window [], AfterWindow (y:z:xs))) rule
-genAfter' (Line (BeforeWindow (x:xs), Window [],          AfterWindow (y:z:ys)))            rule = rule x y z : genAfter' (Line (BeforeWindow [], Window [], AfterWindow (y:z:ys))) rule
-genAfter' (Line (_,                   Window list@(x:xs), AfterWindow (y:z:ys)))            rule = rule (last list) y z : genAfter' (Line (BeforeWindow [], Window [], AfterWindow (y:z:ys))) rule
-genAfter' _                                                                                 _    = throw ExhaustiveException
+genAfter' (Line (BeforeWindow [],     Window [],          AfterWindow (x:y:z:xs))) rule = rule x y z : genAfter' (Line (BeforeWindow [], Window [], AfterWindow (y:z:xs))) rule
+genAfter' (Line (BeforeWindow (x:xs), Window [],          AfterWindow (y:z:ys)))   rule = rule x y z : genAfter' (Line (BeforeWindow [], Window [], AfterWindow (y:z:ys))) rule
+genAfter' (Line (_,                   Window list@(x:xs), AfterWindow (y:z:ys)))   rule = rule (last list) y z : genAfter' (Line (BeforeWindow [], Window [], AfterWindow (y:z:ys))) rule
+genAfter' _                                                                        _    = throw ExhaustiveException
 
 getNextLine :: Line -> Rule -> Line
 getNextLine line rule = Line (genBefore line rule, genWindow line rule, genAfter line rule)
