@@ -49,10 +49,10 @@ genCell targetIndex currentIndex
 
 genWindow :: WorkingLine -> Rule -> Window
 genWindow (WorkingLine (BeforeWindow (x:_), Window (a:b:c:as), AfterWindow (y:_))) rule = Window $ rule x a b : rule a b c : genWindow' (Window (b:c:as)) y rule
-genWindow (WorkingLine (BeforeWindow (x:_), Window (a:b:_),   AfterWindow (y:_))) rule  = Window $ rule x a b : [rule a b y]
-genWindow (WorkingLine (BeforeWindow (x:_), Window (a:_),     AfterWindow (y:_))) rule  = Window [rule x a y]
-genWindow (WorkingLine (_,                   Window [],         _))               _     = Window []
-genWindow _                                                                       _     = throw ExhaustiveException
+genWindow (WorkingLine (BeforeWindow (x:_), Window (a:b:_),    AfterWindow (y:_))) rule = Window $ rule x a b : [rule a b y]
+genWindow (WorkingLine (BeforeWindow (x:_), Window (a:_),      AfterWindow (y:_))) rule = Window [rule x a y]
+genWindow (WorkingLine (_,                  Window [],        _))                  _    = Window []
+genWindow _                                                                        _    = throw ExhaustiveException
 
 genWindow' :: Window -> Cell -> Rule -> [Cell]
 genWindow' (Window (x:y:z:xs)) cell rule = rule x y z : genWindow' (Window (y:z:xs)) cell rule
@@ -65,7 +65,7 @@ genBefore line rule = BeforeWindow $ genBefore' line rule
 genBefore' :: WorkingLine -> Rule -> [Cell]
 genBefore' (WorkingLine (BeforeWindow (x:y:z:xs), Window [],     AfterWindow []))     rule = rule z y x : genBefore' (WorkingLine (BeforeWindow (y:z:xs), Window [], AfterWindow [])) rule
 genBefore' (WorkingLine (BeforeWindow (x:y:xs),   Window [],     AfterWindow (z:_)))  rule = rule y x z : genBefore' (WorkingLine (BeforeWindow (x:y:xs), Window [], AfterWindow [])) rule
-genBefore' (WorkingLine (BeforeWindow (x:y:xs),   Window (z:_), _))                   rule = rule y x z : genBefore' (WorkingLine (BeforeWindow (x:y:xs), Window [], AfterWindow [])) rule
+genBefore' (WorkingLine (BeforeWindow (x:y:xs),   Window (z:_),  _))                  rule = rule y x z : genBefore' (WorkingLine (BeforeWindow (x:y:xs), Window [], AfterWindow [])) rule
 genBefore' _                                                                          _    = throw ExhaustiveException
 
 genAfter :: WorkingLine -> Rule -> AfterWindow

@@ -1,4 +1,4 @@
-module Display where
+module Display (toScreen) where
 
 import Parser (Conf (..), WindowLength (..), WindowStart (..))
 import Generation (Lines)

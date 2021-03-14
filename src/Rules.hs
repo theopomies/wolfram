@@ -6,7 +6,7 @@ import Data.Bits ( Bits(testBit) )
 
 type Rule = Cell -> Cell -> Cell -> Cell
 newtype RuleNumber = RuleNumber Int
-newtype Cell = Cell Char
+newtype Cell = Cell Char deriving Eq
 instance Show Cell where
   show (Cell cell) = show cell
 
