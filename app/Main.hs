@@ -1,8 +1,8 @@
 module Main where
 
-import Control.Exception
-import System.Environment
-import Error
+import Control.Exception ( catch )
+import System.Environment ( getArgs )
+import Error ( exceptionHandler )
 import Parser (parse)
 import Lexer (tokenize)
 import Generation (Window, getLines)

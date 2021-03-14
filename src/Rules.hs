@@ -1,8 +1,8 @@
 module Rules (Rule, Cell (..), RuleNumber (..), getRule) where
 
-import Error
-import Control.Exception
-import Data.Bits
+import Error ( MyException(ExhaustiveException) )
+import Control.Exception ( throw )
+import Data.Bits ( Bits(testBit) )
 
 type Rule = Cell -> Cell -> Cell -> Cell
 newtype RuleNumber = RuleNumber Int

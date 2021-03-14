@@ -1,8 +1,8 @@
 module Parser (parse, Conf (..), WindowStart (..), WindowLength (..), WindowWidth (..), WindowMove (..)) where
 
 import Text.Read (readMaybe)
-import Error
-import Control.Exception
+import Error ( MyException(ArgException) )
+import Control.Exception ( throw )
 import Rules (Rule, RuleNumber (..), getRule)
 import Lexer (TOKEN (..))
 

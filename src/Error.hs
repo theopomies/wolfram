@@ -1,7 +1,7 @@
 module Error where
 
-import System.Exit
-import Control.Exception
+import System.Exit ( exitSuccess, exitWith, ExitCode(ExitFailure) )
+import Control.Exception ( Exception )
 import System.Environment()
 
 data MyException = ArgException

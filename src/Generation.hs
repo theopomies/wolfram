@@ -1,7 +1,7 @@
 module Generation (getLines, Window, Lines) where
 
-import Error
-import Control.Exception
+import Error ( MyException(ExhaustiveException) )
+import Control.Exception ( throw )
 import Parser (Conf (..), WindowWidth (..), WindowMove (..))
 import Rules (Cell (..), Rule)
 

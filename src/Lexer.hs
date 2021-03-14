@@ -1,7 +1,7 @@
 module Lexer (TOKEN (..), tokenize) where
 
-import Error
-import Control.Exception
+import Error ( MyException(UsageException) )
+import Control.Exception ( throw )
 
 data TOKEN = RULE | LINES | START | WINDOW | MOVE | Value String
 
