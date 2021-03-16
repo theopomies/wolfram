@@ -1,4 +1,9 @@
-module Parser (parse, Conf (..), WindowStart (..), WindowLength (..), WindowWidth (..), WindowMove (..)) where
+{-# LANGUAGE CPP #-}
+module Parser
+#ifndef TESTS
+(parse, Conf (..), WindowStart (..), WindowLength (..), WindowWidth (..), WindowMove (..))
+#endif
+where
 
 import Text.Read (readMaybe)
 import Error ( MyException(ArgException) )
@@ -7,12 +12,18 @@ import Rules (Rule, RuleNumber (..), getRule)
 import Lexer (TOKEN (..))
 
 data Conf = Conf Rule WindowStart WindowLength WindowWidth WindowMove
+  deriving Eq
 newtype WindowStart  = WindowStart Int
+  deriving Eq
 newtype WindowLength = WindowLength (Maybe Int)
+  deriving Eq
 newtype WindowWidth  = WindowWidth Int
+  deriving Eq
 newtype WindowMove   = WindowMove Int
+  deriving Eq
 
 data WorkingConf = WorkingConf (Maybe RuleNumber) WindowStart WindowLength WindowWidth WindowMove
+  deriving Eq
 
 parse :: [TOKEN] -> Conf
 parse = flip parse' defaultConf
@@ -20,20 +31,35 @@ parse = flip parse' defaultConf
 toConf :: WorkingConf -> Conf
 toConf (WorkingConf rule start ls window move) = Conf (getRule $ validateMaybe rule) start ls window move
 
+defaultRule :: Maybe RuleNumber
+defaultRule = Nothing
+
+defaultStart :: WindowStart
+defaultStart = WindowStart 0
+
+defaultLength :: WindowLength
+defaultLength = WindowLength Nothing
+
+defaultWidth :: WindowWidth
+defaultWidth = WindowWidth 80
+
+defaultMove :: WindowMove
+defaultMove = WindowMove 0
+
 defaultConf :: WorkingConf
-defaultConf = WorkingConf Nothing (WindowStart 0) (WindowLength Nothing) (WindowWidth 80) (WindowMove 0)
+defaultConf = WorkingConf Nothing defaultStart defaultLength defaultWidth defaultMove
 
 parse' :: [TOKEN] -> WorkingConf -> Conf
 parse' []                      c = toConf c
 parse' (RULE : Value v : xs)   c = parse' xs $ setRule c $ readRule v
 parse' (START : Value v : xs)  c = parse' xs $ setWindowStart c $ readWindowStart v
-parse' (LINES : Value v : xs)  c = parse' xs $ setWindowLength c $ readLine v
-parse' (WINDOW : Value v : xs) c = parse' xs $ setWindow c $ readWindow v
+parse' (LINES : Value v : xs)  c = parse' xs $ setWindowLength c $ readWindowLength v
+parse' (WINDOW : Value v : xs) c = parse' xs $ setWindowWidth c $ readWindowWidth v
 parse' (MOVE : Value v : xs)   c = parse' xs $ setWindowMove c $ readWindowMove v
 parse' _                       _ = throw ArgException
 
-readLine :: String -> Int
-readLine = isPositive . validateMaybe . readMaybe
+readWindowLength :: String -> Int
+readWindowLength = isPositive . validateMaybe . readMaybe
 
 readWindowStart :: String -> Int
 readWindowStart = isPositive . validateMaybe . readMaybe
@@ -41,8 +67,8 @@ readWindowStart = isPositive . validateMaybe . readMaybe
 readRule :: String -> Int
 readRule = isValidRule . validateMaybe . readMaybe
 
-readWindow :: String -> Int
-readWindow = isPositive . validateMaybe . readMaybe
+readWindowWidth :: String -> Int
+readWindowWidth = isPositive . validateMaybe . readMaybe
 
 readWindowMove :: String -> Int
 readWindowMove = validateMaybe . readMaybe
@@ -70,8 +96,8 @@ setWindowStart (WorkingConf rule _ ls window move) start = WorkingConf rule (Win
 setWindowLength :: WorkingConf -> Int -> WorkingConf
 setWindowLength (WorkingConf rule start _ window move) ls = WorkingConf rule start (WindowLength $ Just ls) window move
 
-setWindow :: WorkingConf -> Int -> WorkingConf
-setWindow (WorkingConf rule start ls _ move) window = WorkingConf rule start ls (WindowWidth window) move
+setWindowWidth :: WorkingConf -> Int -> WorkingConf
+setWindowWidth (WorkingConf rule start ls _ move) window = WorkingConf rule start ls (WindowWidth window) move
 
 setWindowMove :: WorkingConf -> Int -> WorkingConf
 setWindowMove (WorkingConf rule start ls window _) move = WorkingConf rule start ls window $ WindowMove move

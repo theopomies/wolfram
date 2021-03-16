@@ -1,9 +1,14 @@
-module Lexer (TOKEN (..), tokenize) where
+{-# LANGUAGE CPP #-}
+module Lexer
+#ifndef TESTS
+(TOKEN (..), tokenize)
+#endif
+where
 
 import Error ( MyException(UsageException) )
 import Control.Exception ( throw )
 
-data TOKEN = RULE | LINES | START | WINDOW | MOVE | Value String
+data TOKEN = RULE | LINES | START | WINDOW | MOVE | Value String deriving Eq
 
 tokenize :: [String] -> [TOKEN]
 tokenize []                = []

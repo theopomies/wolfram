@@ -1,4 +1,9 @@
-module Generation (getLines, Window, Lines) where
+{-# LANGUAGE CPP #-}
+module Generation
+#ifndef TESTS
+(getLines, Window, Lines)
+#endif
+where
 
 import Error ( MyException(ExhaustiveException) )
 import Control.Exception ( throw )
@@ -6,7 +11,7 @@ import Parser (Conf (..), WindowWidth (..), WindowMove (..))
 import Rules (Cell (..), Rule)
 
 type Lines = [Window]
-newtype Line = Window [Cell]
+newtype Line = Window [Cell] deriving Eq
 instance Show Line where
   show (Window cells) = map cellToChar cells
 
@@ -49,14 +54,14 @@ genCell targetIndex currentIndex
 
 genWindow :: WorkingLine -> Rule -> Window
 genWindow (WorkingLine (BeforeWindow (x:_), Window (a:b:c:as), AfterWindow (y:_))) rule = Window $ rule x a b : rule a b c : genWindow' (Window (b:c:as)) y rule
-genWindow (WorkingLine (BeforeWindow (x:_), Window (a:b:_),    AfterWindow (y:_))) rule = Window $ rule x a b : [rule a b y]
-genWindow (WorkingLine (BeforeWindow (x:_), Window (a:_),      AfterWindow (y:_))) rule = Window [rule x a y]
+genWindow (WorkingLine (BeforeWindow (x:_), Window [a, b] ,    AfterWindow (y:_))) rule = Window $ rule x a b : [rule a b y]
+genWindow (WorkingLine (BeforeWindow (x:_), Window [a]  ,      AfterWindow (y:_))) rule = Window [rule x a y]
 genWindow (WorkingLine (_,                  Window [],        _))                  _    = Window []
 genWindow _                                                                        _    = throw ExhaustiveException
 
 genWindow' :: Window -> Cell -> Rule -> [Cell]
 genWindow' (Window (x:y:z:xs)) cell rule = rule x y z : genWindow' (Window (y:z:xs)) cell rule
-genWindow' (Window (x:y:_))    cell rule = [rule x y cell]
+genWindow' (Window [x, y])     cell rule = [rule x y cell]
 genWindow' _                   _    _    = throw ExhaustiveException
 
 genBefore :: WorkingLine -> Rule -> BeforeWindow

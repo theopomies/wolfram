@@ -7,7 +7,7 @@ import System.Environment()
 data MyException = ArgException
                  | UsageException
                  | ExhaustiveException
-                 deriving Show
+                 deriving (Show, Eq)
 instance Exception MyException
 
 printHelp :: IO ()

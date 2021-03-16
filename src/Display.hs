@@ -1,4 +1,9 @@
-module Display (toScreen) where
+{-# LANGUAGE CPP #-}
+module Display
+#ifndef TESTS
+(toScreen)
+#endif
+where
 
 import Parser (Conf (..), WindowLength (..), WindowStart (..))
 import Generation (Lines)

@@ -1,11 +1,28 @@
-module Rules (Rule, Cell (..), RuleNumber (..), getRule) where
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleInstances #-}
+module Rules
+#ifndef TESTS
+(Rule, Cell (..), RuleNumber (..), getRule)
+#endif
+where
 
 import Error ( MyException(ExhaustiveException) )
 import Control.Exception ( throw )
 import Data.Bits ( Bits(testBit) )
 
 type Rule = Cell -> Cell -> Cell -> Cell
-newtype RuleNumber = RuleNumber Int
+instance Eq Rule where
+  (==) a b =
+    a (Cell '*') (Cell '*') (Cell '*') == b (Cell '*') (Cell '*') (Cell '*')
+    && a (Cell '*') (Cell '*') (Cell ' ') == b (Cell '*') (Cell '*') (Cell ' ')
+    && a (Cell '*') (Cell ' ') (Cell '*') == b (Cell '*') (Cell ' ') (Cell '*')
+    && a (Cell '*') (Cell ' ') (Cell ' ') == b (Cell '*') (Cell ' ') (Cell ' ')
+    && a (Cell ' ') (Cell '*') (Cell '*') == b (Cell ' ') (Cell '*') (Cell '*')
+    && a (Cell ' ') (Cell '*') (Cell ' ') == b (Cell ' ') (Cell '*') (Cell ' ')
+    && a (Cell ' ') (Cell ' ') (Cell '*') == b (Cell ' ') (Cell ' ') (Cell '*')
+    && a (Cell ' ') (Cell ' ') (Cell ' ') == b (Cell ' ') (Cell ' ') (Cell ' ')
+  (/=) a b = not $ a == b
+newtype RuleNumber = RuleNumber Int deriving Eq
 newtype Cell = Cell Char deriving Eq
 instance Show Cell where
   show (Cell cell) = show cell
