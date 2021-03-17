@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 module Parser
 #ifndef TESTS
-(parse, Conf (..), WindowStart (..), WindowLength (..), WindowWidth (..), WindowMove (..))
+(parse, Conf (..), WindowStart (..), WindowLength (..), WindowWidth (..), WindowMove (..), validateConf)
 #endif
 where
 
@@ -24,6 +24,21 @@ newtype WindowMove   = WindowMove Int
 
 data WorkingConf = WorkingConf (Maybe RuleNumber) WindowStart WindowLength WindowWidth WindowMove
   deriving Eq
+
+validateConf :: Conf -> Conf
+validateConf conf@(Conf rule (WindowStart start) (WindowLength (Just length)) (WindowWidth width) (WindowMove move))
+    | isARule rule && isPositive start == start && isPositive length == length && isPositive width == width = conf
+    | otherwise                                                                                             = throw ArgException
+validateConf conf@(Conf rule (WindowStart start) (WindowLength Nothing) (WindowWidth width) (WindowMove move))
+    | isARule rule && isPositive start == start && isPositive width == width                                = conf
+    | otherwise                                                                                             = throw ArgException
+
+isARule :: Rule -> Bool
+isARule rule = isARule' rule 255
+
+isARule' :: Rule -> Int -> Bool
+isARule' rule 0 = rule == getRule (RuleNumber 0)
+isARule' rule n = rule == getRule (RuleNumber n) || isARule' rule (n - 1)
 
 parse :: [TOKEN] -> Conf
 parse = flip parse' defaultConf
